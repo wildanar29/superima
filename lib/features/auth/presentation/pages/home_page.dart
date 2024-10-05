@@ -5,11 +5,20 @@ import '../../domain/usecases/get_patient_usecase.dart';
 import '../../domain/entities/patient.dart';
 import 'package:flutter_bloc/flutter_bloc.dart'; // Untuk BlocProvider
 import '../../data/repositories/auth_repository_impl.dart';
+import '../../data/repositories/appointment_repository_impl.dart'; // Tambahkan repository untuk appointment
+import '../../../../core/network/api_service.dart';
+import '../../domain/usecases/get_appointment_usecase.dart';
 import 'package:mobile_rsi/features/auth/presentation/bloc/auth_bloc.dart'; // Untuk AuthBloc
 import 'package:mobile_rsi/features/auth/presentation/bloc/auth_event.dart';
 import 'package:mobile_rsi/features/auth/presentation/pages/pendaftaran_page.dart';
 import 'package:mobile_rsi/features/auth/presentation/pages/penambahan_peserta_page.dart';
 import 'profile_page.dart'; // Import halaman profil
+import 'package:mobile_rsi/features/auth/presentation/pages/tiket_saya_page.dart'; // Import TiketSayaPage
+import 'riwayat_berobat_page.dart'; // Import halaman Riwayat Berobat
+import 'jadwal_dokter_page.dart';
+import 'cek_kamar_page.dart'; // Import halaman Cek Kamar
+import 'resep_saya_page.dart'; // Import halaman Resep Saya
+import 'kritik_saran_page.dart'; // Import halaman Kritik & Saran
 
 class HomePage extends StatefulWidget {
   final GetPatientUsecase getPatientUsecase;
@@ -23,6 +32,14 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0; // To keep track of the current index of the slider
+  late GetAppointmentsUseCase getAppointmentsUseCase; // Tambahkan inisialisasi untuk GetAppointmentsUseCase
+
+  @override
+  void initState() {
+    super.initState();
+    // Inisialisasi GetAppointmentsUseCase dengan repository dan ApiService
+    getAppointmentsUseCase = GetAppointmentsUseCase(AppointmentRepositoryImpl(ApiService()));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -221,53 +238,121 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.03), // Jarak antar komponen
-                // 3 Buttons for navigation
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                // 3 Buttons per row (3 baris 3 kolom)
+                Column(
                   children: [
-                    Flexible(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          // Kirim data pasien ke PendaftaranPage
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => PendaftaranPage(patientData: patientData.toJson(),authRepository: AuthRepositoryImpl()),
-                            ),
-                          );
-                        },
-                        child: Text('Pendaftaran'),
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Flexible(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // Kirim data pasien ke PendaftaranPage
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PendaftaranPage(patientData: patientData.toJson(), authRepository: AuthRepositoryImpl()),
+                                ),
+                              );
+                            },
+                            child: Text('Pendaftaran'),
+                          ),
+                        ),
+                        Flexible(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => RiwayatBerobatPage(patientData: patientData.toJson()),
+                                ),
+                              );
+                            },
+                            child: Text('Riwayat Berobat'),
+                          ),
+                        ),
+                        Flexible(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => JadwalDokterPage()), // Navigasi ke halaman Jadwal Dokter
+                              );
+                            },
+                            child: Text('Jadwal Dokter'),
+                          ),
+                        ),
+                      ],
                     ),
-                    Flexible(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/riwayatBerobat');
-                        },
-                        child: Text('Riwayat Berobat'),
-                      ),
+                    SizedBox(height: screenHeight * 0.02),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Flexible(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // Kirim data pasien ke PenambahanPesertaPage
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PenambahanPesertaPage(patientData: patientData.toJson(), authRepository: AuthRepositoryImpl()),
+                                ),
+                              );
+                            },
+                            child: Text('Penambahan Peserta'),
+                          ),
+                        ),
+                        Flexible(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => TiketSayaPage(patientData: patientData.toJson(), authRepository: AuthRepositoryImpl(), getAppointmentsUseCase: getAppointmentsUseCase)), // Navigasi langsung ke TiketSayaPage
+                              );
+                            },
+                            child: Text('Tiket Saya'),
+                          ),
+                        ),
+                      ],
                     ),
-                    Flexible(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/jadwalDokter');
-                        },
-                        child: Text('Jadwal Dokter'),
-                      ),
-                    ),
-                    Flexible(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          // Kirim data pasien ke PendaftaranPage
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => PenambahanPesertaPage(patientData: patientData.toJson(),authRepository: AuthRepositoryImpl()),
-                            ),
-                          );
-                        },
-                        child: Text('Penambahan Peserta'),
-                      ),
+                    SizedBox(height: screenHeight * 0.02), // Tambahkan jarak antar tombol
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Flexible(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => CekKamarPage()), // Navigasi ke halaman Cek Kamar
+                              );
+                            },
+                            child: Text('Cek Kamar'),
+                          ),
+                        ),
+                        Flexible(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => ResepSayaPage()), // Navigasi ke halaman Resep Saya
+                              );
+                            },
+                            child: Text('Resep Saya'),
+                          ),
+                        ),
+                        Flexible(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => KritikSaranPage()), // Navigasi ke halaman Kritik & Saran
+                              );
+                            },
+                            child: Text('Kritik & Saran'),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

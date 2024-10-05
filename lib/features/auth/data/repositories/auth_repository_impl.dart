@@ -5,12 +5,12 @@ import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  final String loginUrl = 'http://10.200.200.20:8080/login';
-  final String signupUrl = 'http://10.200.200.20:8080/register';
-  final String checkMedicalNoUrl = 'http://10.10.10.5/test3/WebService/V1_1/AppointmentWS.asmx/PatientGetOneByMedicalNo?AccessKey=AvcMblPat&MedicalNo=';
-  final String logoutUrl = 'http://10.200.200.20:8080/logout';
-  final String noKKUrl = 'http://10.200.200.20:8080/user/nokk';
-  final String medicalNoUrl = 'http://10.200.200.20:8080//get-medicalno';
+  final String loginUrl = 'http://103.165.218.182:8080/login';
+  final String signupUrl = 'http://103.165.218.182:8080/register';
+  final String checkMedicalNoUrl = 'http://103.165.218.182:8080/WebService/V1_1/AppointmentWS.asmx/PatientGetOneByMedicalNo?AccessKey=AvcMblPat&MedicalNo=';
+  final String logoutUrl = 'http://103.165.218.182:8080/logout';
+  final String noKKUrl = 'http://103.165.218.182:8080/user/nokk';
+  final String medicalNoUrl = 'http://103.165.218.182:8080/get-medicalno';
 
   @override
   Future<String?> login(String nikOrMedicalNo, String password) async {

@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ParamedicScheduleRepositoryImpl {
-  final String baseUrl = 'http://10.10.10.5/test3/WebService/V1_1/AppointmentWS.asmx/ParamedicScheduleDateGetList?AccessKey=AvcMblPat';
+  final String baseUrl = 'https://avi.rsimmanuel.net/test/WebService/V1_1/AppointmentWS.asmx/ParamedicScheduleDateGetList?AccessKey=AvcMblPat';
 
   // Mengubah return type menjadi Map agar bisa mengembalikan StartTime1 dan EndTime1
   Future<Map<String, String?>> getParamedicSchedule(

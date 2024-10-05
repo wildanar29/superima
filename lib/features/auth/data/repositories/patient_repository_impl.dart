@@ -4,7 +4,7 @@ import '../../domain/entities/patient.dart'; // Pastikan sudah diimport
 import '../../domain/repositories/patient_repository.dart';
 
 class PatientRepositoryImpl implements PatientRepository {
-  final String getPatientUrl = 'http://10.10.10.5/test3/WebService/V1_1/AppointmentWS.asmx/PatientGetOneByMedicalNo?AccessKey=AvcMblPat&MedicalNo=';
+  final String getPatientUrl = 'https://avi.rsimmanuel.net/test/WebService/V1_1/AppointmentWS.asmx/PatientGetOneByMedicalNo?AccessKey=AvcMblPat&MedicalNo=';
 
   @override
   Future<Patient?> getPatient(String medicalNo) async {

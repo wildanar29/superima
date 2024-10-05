@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'dart:convert';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:mobile_rsi/features/auth/domain/repositories/auth_repository.dart';
 import '../../data/repositories/paramedic_repository_impl.dart';
@@ -7,6 +8,10 @@ import '../../domain/entities/paramedic.dart';
 import '../../data/repositories/poliklinik_repository_impl.dart';
 import '../../domain/entities/poliklinik.dart';
 import '../../data/repositories/shedule_repository_impl.dart'; // Import repository jadwal
+import '../../domain/entities/appointment_create.dart';
+import '../../domain/usecases/create_appointment_usecase.dart';
+import '../../data/repositories/appointment_repository_impl.dart';
+import '../../../../core/network/api_service.dart';
 
 class PendaftaranPasienMitraPage extends StatefulWidget {
   final Map<String, dynamic> patientData;
@@ -91,18 +96,93 @@ class _PendaftaranPasienMitraPageState
             scheduleAvailable = true; // Ada jadwal
             startTime = schedule['StartTime1'];
             endTime = schedule['EndTime1'];
+
+            // Tampilkan popup dengan jadwal yang tersedia dan nama dokter serta poli
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text('Jadwal Tersedia'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Jadwal tersedia untuk:'),
+                      SizedBox(height: 10),
+                      Text('Dokter: $selectedDoctorName'),
+                      Text('Poli: $selectedPoliName'),
+                      SizedBox(height: 10),
+                      Text('Waktu Mulai: $startTime'),
+                      Text('Waktu Selesai: $endTime'),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: Text('OK'),
+                    ),
+                  ],
+                );
+              },
+            );
           } else {
             scheduleAvailable = false; // Tidak ada jadwal
+            // Tampilkan popup jika tidak ada jadwal yang tersedia
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text('Jadwal Tidak Tersedia'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Tidak ada jadwal untuk:'),
+                      SizedBox(height: 10),
+                      Text('Dokter: $selectedDoctorName'),
+                      Text('Poli: $selectedPoliName'),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: Text('OK'),
+                    ),
+                  ],
+                );
+              },
+            );
           }
         });
       } catch (e) {
         print('Error checking schedule: $e');
         setState(() {
           scheduleAvailable = false; // Tidak ada jadwal
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text('Error'),
+                content: Text('Terjadi kesalahan saat memeriksa jadwal.'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text('OK'),
+                  ),
+                ],
+              );
+            },
+          );
         });
       }
     }
   }
+
+
 
   // Fungsi yang dipanggil ketika poli dipilih
   Future<void> _onPoliSelected(String? newValue, List<PoliKlinik> polikliniks) async {
@@ -111,8 +191,12 @@ class _PendaftaranPasienMitraPageState
       selectedPoliId = polikliniks
           .firstWhere((poli) => poli.serviceUnitName == newValue)
           .serviceUnitID;
-      selectedDoctorName = null; // Reset pilihan dokter
-      _doctorsByPoliFuture = _getDoctorsByPoli(selectedPoliId!); // Ambil daftar dokter berdasarkan poli yang dipilih
+
+      // Reset dokter yang dipilih
+      // selectedDoctorName = null;
+
+      // Muat data dokter berdasarkan poli yang dipilih
+      _doctorsByPoliFuture = _getDoctorsByPoli(selectedPoliId!);
     });
   }
 
@@ -123,6 +207,7 @@ class _PendaftaranPasienMitraPageState
       selectedDoctorId = paramedics
           .firstWhere((doctor) => doctor.paramedicName == newValue)
           .paramedicID;
+      _checkSchedule();
     });
     // Setelah dokter dipilih, panggil API untuk mendapatkan Poli Klinik berdasarkan dokter
     _poliKlinikFuture = _getPoliKlinikByParamedicId(selectedDoctorId!);
@@ -144,6 +229,12 @@ class _PendaftaranPasienMitraPageState
       home: Scaffold(
         appBar: AppBar(
           title: Text('Pendaftaran Appointment'),
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back), // Tambahkan tombol back
+            onPressed: () {
+              Navigator.pop(context); // Kembali ke halaman sebelumnya
+            },
+          ),
         ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -238,7 +329,8 @@ class _PendaftaranPasienMitraPageState
                                       setState(() {
                                         selectedOption = value; // Pilih berdasarkan dokter
                                         selectedPoliName = null; // Reset pilihan poli
-                                        selectedDoctorName = null;
+                                        // selectedDoctorName = null;
+                                        // selectedName = null;
                                       });
                                     },
                                   ),
@@ -249,8 +341,9 @@ class _PendaftaranPasienMitraPageState
                                     onChanged: (String? value) {
                                       setState(() {
                                         selectedOption = value; // Pilih berdasarkan poli
-                                        selectedDoctorName = null; // Reset pilihan dokter
+                                        // selectedDoctorName = null; // Reset pilihan dokter
                                         selectedPoliName = null;
+                                        // selectedName = null;
                                       });
                                     },
                                   ),
@@ -268,7 +361,7 @@ class _PendaftaranPasienMitraPageState
                               ] else ...[
                                 _buildAllPoliDropdown(),
                                 SizedBox(height: 20),
-                                if (selectedPoliId != null) _buildDoctorDropdownBasedOnPoli()
+                                if (selectedPoliId != null) _buildDoctorDropdownBasedOnPoli(),
                               ],
 
                               // Tampilkan status jadwal setelah poli dipilih
@@ -283,6 +376,24 @@ class _PendaftaranPasienMitraPageState
                                   Text('Waktu Selesai: $endTime'),
                                 ],
                               ],
+
+                              SizedBox(height: 20),
+
+                              // Tombol untuk submit appointment
+                              ElevatedButton(
+                                onPressed: (scheduleAvailable != null && scheduleAvailable == true) ? () {
+                                  if (selectedMedicalNo != null && selectedPoliId != null && selectedDoctorId != null && selectedDate != null && selectedName != null) {
+                                    // Tambahkan logika untuk mengirim data appointment
+                                    _submitAppointment();
+                                  } else {
+                                    // Tampilkan pesan jika ada data yang belum dipilih
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Pastikan semua data sudah dipilih')),
+                                    );
+                                  }
+                                } : null, // Tombol dinonaktifkan jika jadwal tidak tersedia atau belum dicek
+                                child: Text('Daftar Appointment'),
+                              ),
                             ],
                           );
                         } else {
@@ -324,14 +435,22 @@ class _PendaftaranPasienMitraPageState
               return Text('Error: ${snapshot.error}');
             } else if (snapshot.hasData && snapshot.data != null) {
               List<Paramedic> paramedics = snapshot.data!;
+
+              // Filter duplicates based on paramedicName
+              List<Paramedic> uniqueParamedics = paramedics.toSet().toList();
+              print('diatas');
+              print(uniqueParamedics);
+              print('dibawah');
+
               return DropdownButton<String>(
                 hint: Text("Pilih Dokter"),
-                value: selectedDoctorName,
+                value: paramedics.any((doctor) => doctor.paramedicName == selectedDoctorName)
+                    ? selectedDoctorName
+                    : null,  // Set ke null jika selectedDoctorName tidak valid
                 onChanged: (String? newValue) async {
                   await _onDoctorSelected(newValue, paramedics);
                 },
-                items: paramedics
-                    .map<DropdownMenuItem<String>>((Paramedic doctor) {
+                items: paramedics.map<DropdownMenuItem<String>>((Paramedic doctor) {
                   return DropdownMenuItem<String>(
                     value: doctor.paramedicName,
                     child: Text(doctor.paramedicName),
@@ -343,11 +462,12 @@ class _PendaftaranPasienMitraPageState
             }
           },
         ),
+
       ],
     );
   }
 
-  // Dropdown untuk menampilkan poli berdasarkan dokter yang dipilih
+  // Widget untuk menampilkan dropdown poli berdasarkan dokter yang dipilih
   Widget _buildPoliDropdownBasedOnDoctor() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,25 +481,38 @@ class _PendaftaranPasienMitraPageState
         ),
         SizedBox(height: 10),
         FutureBuilder<List<PoliKlinik>>(
-          future: _poliKlinikFuture,
+          future: _poliKlinikFuture, // Panggil Future untuk mendapatkan data poli klinik berdasarkan dokter
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
               return Text('Error: ${snapshot.error}');
-            } else if (snapshot.hasData && snapshot.data != null) {
+            } else if (snapshot.hasData && snapshot.data != null && snapshot.data!.isNotEmpty) {
               List<PoliKlinik> polikliniks = snapshot.data!;
+
+              // Periksa apakah selectedPoliName ada dalam list, jika tidak, set ke null
+              if (selectedPoliName != null && !polikliniks.any((poli) => poli.serviceUnitName == selectedPoliName)) {
+                // selectedPoliName = null; // Reset jika nilai tidak valid
+              }
+
               return DropdownButton<String>(
                 hint: Text("Pilih Poli Klinik"),
-                value: selectedPoliName,
-                onChanged: (String? newValue) async {
-                  await _onPoliSelected(newValue, polikliniks);
+                value: polikliniks.any((poli) => poli.serviceUnitName == selectedPoliName)
+                    ? selectedPoliName
+                    : null,
+                onChanged: (String? newValue) {
+                  setState(() {
+                    selectedPoliName = newValue;
+                    selectedPoliId = polikliniks
+                        .firstWhere((poli) => poli.serviceUnitName == newValue)
+                        .serviceUnitID;
+                    _checkSchedule();
+                  });
                 },
-                items: polikliniks
-                    .map<DropdownMenuItem<String>>((PoliKlinik poli) {
+                items: polikliniks.map<DropdownMenuItem<String>>((PoliKlinik poli) {
                   return DropdownMenuItem<String>(
                     value: poli.serviceUnitName,
-                    child: Text(poli.serviceUnitName), // Menampilkan serviceUnitName
+                    child: Text(poli.serviceUnitName), // Tampilkan nama poli
                   );
                 }).toList(),
               );
@@ -391,6 +524,7 @@ class _PendaftaranPasienMitraPageState
       ],
     );
   }
+
 
   // Dropdown untuk menampilkan semua poli
   Widget _buildAllPoliDropdown() {
@@ -416,17 +550,24 @@ class _PendaftaranPasienMitraPageState
               List<PoliKlinik> polikliniks = snapshot.data!;
               return DropdownButton<String>(
                 hint: Text("Pilih Poli Klinik"),
-                value: selectedPoliName,
+                value: (polikliniks.isNotEmpty && selectedPoliName != null && polikliniks.any((poli) => poli.serviceUnitName == selectedPoliName))
+                    ? selectedPoliName
+                    : null, // Jika tidak ada data, maka value menjadi null
                 onChanged: (String? newValue) async {
                   await _onPoliSelected(newValue, polikliniks);
                 },
-                items: polikliniks
-                    .map<DropdownMenuItem<String>>((PoliKlinik poli) {
-                  return DropdownMenuItem<String>(
-                    value: poli.serviceUnitName,
-                    child: Text(poli.serviceUnitName), // Menampilkan serviceUnitName
-                  );
-                }).toList(),
+                items: [
+                  DropdownMenuItem<String>(
+                    value: '', // Opsi kosong
+                    child: Text('Tidak Ada Poli Terpilih'), // Teks untuk opsi kosong
+                  ),
+                  ...polikliniks.map<DropdownMenuItem<String>>((PoliKlinik poli) {
+                    return DropdownMenuItem<String>(
+                      value: poli.serviceUnitName,
+                      child: Text(poli.serviceUnitName), // Menampilkan serviceUnitName
+                    );
+                  }).toList(),
+                ],
               );
             } else {
               return Text('Tidak ada poli klinik yang tersedia');
@@ -437,7 +578,7 @@ class _PendaftaranPasienMitraPageState
     );
   }
 
-  // Dropdown untuk menampilkan dokter berdasarkan poli yang dipilih
+  // Dropdown untuk memilih dokter berdasarkan poli yang dipilih
   Widget _buildDoctorDropdownBasedOnPoli() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -456,20 +597,24 @@ class _PendaftaranPasienMitraPageState
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
-              print('masuk di error');
               return Text('Error: ${snapshot.error}');
             } else if (snapshot.hasData && snapshot.data != null) {
               List<Paramedic> paramedics = snapshot.data!;
+
+              // Filter duplicate values based on paramedicID
+              List<Paramedic> uniqueParamedics = paramedics.toSet().toList();
+
               return DropdownButton<String>(
                 hint: Text("Pilih Dokter"),
-                value: selectedDoctorName,
+                value: paramedics.any((doctor) => doctor.paramedicName == selectedDoctorName)
+                    ? selectedDoctorName
+                    : null,  // Set ke null jika selectedDoctorName tidak valid
                 onChanged: (String? newValue) async {
                   await _onDoctorSelected(newValue, paramedics);
                 },
-                items: paramedics
-                    .map<DropdownMenuItem<String>>((Paramedic doctor) {
+                items: paramedics.map<DropdownMenuItem<String>>((Paramedic doctor) {
                   return DropdownMenuItem<String>(
-                    value: doctor.paramedicID,
+                    value: doctor.paramedicName,
                     child: Text(doctor.paramedicName),
                   );
                 }).toList(),
@@ -482,6 +627,8 @@ class _PendaftaranPasienMitraPageState
       ],
     );
   }
+
+
 
   // Fungsi untuk memilih tanggal
   Future<void> _selectDate(BuildContext context) async {
@@ -501,4 +648,153 @@ class _PendaftaranPasienMitraPageState
       });
     }
   }
+
+  // Fungsi untuk mengirim data pendaftaran appointment
+  // Fungsi untuk mengirim data pendaftaran appointment
+  void _submitAppointment() async {
+    String dateTimeString = widget.patientData['DateOfBirth_yMdHms'];
+
+    // Jika tipe data sudah dalam String
+    DateTime parsedDate = DateTime.parse(dateTimeString);
+
+    // Mengubahnya menjadi format hanya tanggal (tanpa waktu)
+    String formattedDate = DateFormat('yyyy-MM-dd').format(parsedDate);
+
+    try {
+      AppointmentRequest appointmentRequest = AppointmentRequest(
+        serviceUnitID: selectedPoliId!,
+        paramedicID: selectedDoctorId!,
+        appointmentDate: DateFormat('yyyy-MM-dd').format(selectedDate!),
+        appointmentTime: 'AUTO', // Atur waktu appointment
+        patientID: widget.patientData['PatientID'] ?? '', // Default ke string kosong jika null
+        firstName: widget.patientData['FirstName'] ?? '', // Default ke string kosong jika null
+        middleName: widget.patientData['MiddleName'] ?? '', // Default ke string kosong jika null
+        lastName: widget.patientData['LastName'] ?? '', // Default ke string kosong jika null
+        dateOfBirth: formattedDate ?? '', // Default ke string kosong jika null
+        streetName: widget.patientData['StreetName'] ?? '', // Default ke string kosong jika null
+        district: widget.patientData['District'] ?? '', // Default ke string kosong jika null
+        county: widget.patientData['County'] ?? '', // Default ke string kosong jika null
+        city: widget.patientData['City'] ?? '', // Default ke string kosong jika null
+        state: widget.patientData['State'] ?? '', // Default ke string kosong jika null
+        zipCode: widget.patientData['ZipCode'] ?? '', // Default ke string kosong jika null
+        phoneNo: widget.patientData['PhoneNo'] ?? '', // Default ke string kosong jika null
+        email: widget.patientData['Email'] ?? '', // Default ke string kosong jika null
+        guarantorID: 'ASURANSI',
+        notes: 'mobile',
+        birthPlace: widget.patientData['BirthPlace'] ?? '', // Default ke string kosong jika null
+        sex: widget.patientData['Sex'] ?? 'M', // Default ke 'M' jika null
+        ssn: widget.patientData['Ssn'] ?? '', // Default ke string kosong jika null
+        mobilePhoneNo: widget.patientData['MobilePhone'] ?? '', // Default ke string kosong jika null
+      );
+
+      // Menampilkan pop-up konfirmasi sebelum membuat janji temu
+      _showConfirmationPopup(appointmentRequest);
+
+    } catch (e) {
+      print('Error saat membuat AppointmentRequest: $e');
+    }
+  }
+
+// Fungsi untuk menampilkan pop-up konfirmasi
+  void _showConfirmationPopup(AppointmentRequest appointmentRequest) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Konfirmasi Appointment'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Apakah Anda yakin ingin membuat janji temu dengan detail berikut?'),
+              SizedBox(height: 10),
+              Text('Nama Pasien: ${appointmentRequest.firstName} ${appointmentRequest.middleName} ${appointmentRequest.lastName}'),
+              Text('Dokter: $selectedDoctorName'),
+              Text('Poli: $selectedPoliName'),
+              Text('Tanggal Appointment: ${appointmentRequest.appointmentDate}'),
+              Text('Waktu: ${appointmentRequest.appointmentTime}'),
+              SizedBox(height: 20),
+              Text('Klik "Ya" untuk melanjutkan atau "Tidak" untuk membatalkan.'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Tutup dialog
+              },
+              child: Text('Tidak'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop(); // Tutup dialog
+                // Lanjutkan membuat appointment
+                await _confirmAppointment(appointmentRequest);
+              },
+              child: Text('Ya'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+// Fungsi untuk konfirmasi dan mengirim appointment setelah user menekan "Ya"
+  Future<void> _confirmAppointment(AppointmentRequest appointmentRequest) async {
+    try {
+      final apiService = ApiService(); // Pastikan ApiService diinisialisasi
+      final appointmentRepository = AppointmentRepositoryImpl(apiService);
+      final createAppointmentUseCase = CreateAppointmentUseCase(appointmentRepository);
+      // Menggunakan UseCase untuk membuat appointment dan mendapatkan respons
+      final result = await createAppointmentUseCase.execute(appointmentRequest);
+      Map<String, dynamic> resultJson = json.decode(result);
+      print(resultJson);
+      // Menampilkan pop-up berdasarkan hasil respons
+      if (resultJson['data'] == 'Appointment slot is full') {
+        print('Jadwal sudah penuh');
+        _showResultDialog(
+          title: 'Gagal Membuat Appointment',
+          content: 'Jadwal sudah penuh atau jam tidak ditemukan.',
+        );
+      } else {
+        String appointmentNo = resultJson['data']['AppointmentNo'] ?? 'N/A';
+        String appointmentQue = resultJson['data']['AppointmentQue'] ?? 'N/A';
+
+        _showResultDialog(
+          title: 'Appointment Berhasil Dibuat',
+          content: 'Appointment Anda berhasil dibuat.\n'
+              'Nomor Appointment: $appointmentNo\n'
+              'Nomor Antrian: $appointmentQue',
+        );
+        print('Appointment berhasil dibuat dengan No: $appointmentNo, Que: $appointmentQue');
+      }
+    } catch (e) {
+      print('Error saat membuat AppointmentRequest: $e');
+      _showResultDialog(
+        title: 'Error',
+        content: 'Terjadi kesalahan saat membuat appointment.',
+      );
+    }
+  }
+  // Fungsi untuk menampilkan pop-up hasil appointment
+  void _showResultDialog({required String title, required String content}) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(content),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Tutup dialog
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
 }
