@@ -16,59 +16,167 @@ class SignupPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Sign Up')),
-      body: BlocConsumer<AuthBloc, AuthState>(
-        listener: (context, state) {
-          if (state is SignupFailure) {
-            _showFailureDialog(context, 'Pendaftaran Gagal', 'Silakan coba lagi.'); // Menampilkan popup jika signup gagal
-          } else if (state is SignupSuccess) {
-            _showSuccessDialog(context); // Menampilkan popup setelah signup berhasil
-          }
-        },
-        builder: (context, state) {
-          if (state is AuthLoading) {
-            return Center(child: CircularProgressIndicator());
-          }
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                TextField(
-                  controller: medicalNoController,
-                  decoration: InputDecoration(labelText: 'Medical No'),
-                ),
-                TextField(
-                  controller: phoneNumberController,
-                  decoration: InputDecoration(labelText: 'Phone Number'),
-                ),
-                TextField(
-                  controller: nikController,
-                  decoration: InputDecoration(labelText: 'NIK'),
-                ),
-                TextField(
-                  controller: passwordController,
-                  decoration: InputDecoration(labelText: 'Password'),
-                  obscureText: true,
-                ),
-                TextField(
-                  controller: emailController,
-                  decoration: InputDecoration(labelText: 'Email'),
-                ),
-                TextField(
-                  controller: noKKController,
-                  decoration: InputDecoration(labelText: 'No.KK'),
-                ),
-                SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    _showConfirmationDialog(context); // Tampilkan popup konfirmasi
-                  },
-                  child: Text('Sign Up'),
-                ),
-              ],
+      body: Stack(
+        children: [
+        // Background image
+        Image.asset(
+        'assets/biruLatar.png', // Background image path
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+      ),
+
+          Positioned(
+            top: 300, // Atur posisi gambar kedua
+            left: 1,
+            child: Opacity(
+              opacity: 0.5, // Mengatur opacity untuk memberikan efek kontras rendah
+              child: Image.asset(
+                'assets/gedung.png', // Pastikan path gambar benar
+                width: 420, // Atur lebar gambar kedua
+                height: 545, // Atur tinggi gambar kedua
+                fit: BoxFit.cover, // Pastikan gambar menyesuaikan ukuran
+              ),
             ),
-          );
-        },
+          ),
+
+
+          // Other images on top of background
+      Positioned(
+        top: 130,
+        left: -45,
+        child: Image.asset(
+          'assets/putih.png', // Image for the white background
+          width: 500,
+          height: 400,
+          fit: BoxFit.contain,
+        ),
+      ),
+
+      Positioned(
+        top: 40,
+        left: 145,
+        child: Image.asset(
+          'assets/SignUp.png', // Image for the "Sign In" icon
+          width: 130,
+          height: 100,
+          fit: BoxFit.contain,
+        ),
+      ),
+          Positioned(
+            top: 780, // Atur posisi gambar kedua
+            left: 133,
+            child: Image.asset(
+              'assets/2024.png', // Pastikan path gambar benar
+              width: 150, // Atur lebar gambar kedua
+              height: 20, // Atur tinggi gambar kedua
+              fit: BoxFit.contain, // Pastikan gambar menyesuaikan ukuran
+            ),
+          ),
+
+          Positioned(
+            top: 40,
+            left: 10, // Atur posisi tombol di dekat pojok kiri atas
+            child: IconButton(
+              icon: Icon(Icons.arrow_back_ios, color: Colors.black, size: 40), // Tanda panah kembali
+              onPressed: () {
+                Navigator.pop(context); // Kembali ke halaman sebelumnya (LoginPage)
+              },
+            ),
+          ),
+
+          Positioned(
+            top: 115, // Mengatur jarak vertikal dari atas
+            left: 50, // Mengatur jarak dari kiri
+            right: 50, // Mengatur jarak dari kanan
+            child: BlocConsumer<AuthBloc, AuthState>(
+              listener: (context, state) {
+                if (state is SignupFailure) {
+                  _showFailureDialog(context, 'Pendaftaran Gagal', 'Silakan coba lagi.');
+                } else if (state is SignupSuccess) {
+                  _showSuccessDialog(context);
+                }
+              },
+              builder: (context, state) {
+                if (state is AuthLoading) {
+                  return Center(child: CircularProgressIndicator());
+                }
+                return Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch, // Membuat semua elemen merentang di seluruh lebar
+                    children: [
+                        // Medical No TextField
+                        TextField(
+                          controller: medicalNoController,
+                          decoration: InputDecoration(labelText: 'Medical No'),
+                        ),
+                        SizedBox(height: 10), // Jarak antar TextField
+
+                        // Phone Number TextField
+                        TextField(
+                          controller: phoneNumberController,
+                          decoration: InputDecoration(labelText: 'Phone Number'),
+                        ),
+                        SizedBox(height: 12),
+
+                        // NIK TextField
+                        TextField(
+                          controller: nikController,
+                          decoration: InputDecoration(labelText: 'NIK'),
+                        ),
+                        SizedBox(height: 12),
+
+                        // Password TextField
+                        TextField(
+                          controller: passwordController,
+                          decoration: InputDecoration(labelText: 'Password'),
+                          obscureText: true, // Menyembunyikan teks saat mengetik password
+                        ),
+                        SizedBox(height: 12),
+
+                        // Email TextField
+                        TextField(
+                          controller: emailController,
+                          decoration: InputDecoration(labelText: 'Email'),
+                        ),
+                        SizedBox(height: 12),
+
+                        // No.KK TextField
+                        TextField(
+                          controller: noKKController,
+                          decoration: InputDecoration(labelText: 'No.KK'),
+                        ),
+                        SizedBox(height: 16), // Jarak lebih besar sebelum tombol
+
+                        // Sign Up Button
+                        ElevatedButton(
+                          onPressed: () {
+                            _showConfirmationDialog(context); // Tampilkan popup konfirmasi
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.yellowAccent, // Warna latar belakang tombol
+                            padding: EdgeInsets.symmetric(vertical: 16), // Ukuran tombol
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30.0), // Sudut melengkung tombol
+                              ),
+                            ),
+                          child: Text(
+                            'Daftarkan',
+                            style: TextStyle(
+                              fontSize: 20, // Ukuran teks tombol
+                              fontWeight: FontWeight.bold, // Teks tebal
+                              color: Colors.black, // Warna teks pada tombol
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

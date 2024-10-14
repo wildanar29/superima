@@ -30,6 +30,8 @@ dependencies:
   carousel_slider: ^5.0.0
   cached_network_image: ^3.2.0
 
+
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -42,10 +44,55 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - assets/promo1.jpeg
     - assets/promo2.jpeg
     - assets/promo3.jpeg
     - assets/promo4.jpeg
+    - assets/promo5.jpeg
+    - assets/promo6.jpeg
+    - assets/promo7.jpeg
+    - assets/promo8.jpeg
+    - assets/promo9.jpeg
+    - assets/promo10.jpeg
+    - assets/promo11.jpeg
+    - assets/promo12.jpeg
+    - assets/promo13.jpeg
     - assets/Rsi.png
+    - assets/IMMA.png
+    - assets/LatarLogo.png
+    - assets/biruLatar.png
+    - assets/putih.png
+    - assets/LatarMenu.png
+    - assets/Logo_Rsi.png
+    - assets/selamatdatang.png
+    - assets/SignIn.png
+    - assets/SignUp.png
+    - assets/LatarMenu.png
+    - assets/LatarSemua.png
+    - assets/login.png
+    - assets/Pendaftaran.png
+    - assets/CekKamar.png
+    - assets/HasilPemeriksaan.png
+    - assets/JadwalDokter.png
+    - assets/KritikSaran.png
+    - assets/RiwayatObat.png
+    - assets/ResepSaya.png
+    - assets/WA.png
+    - assets/TiketSaya.png
+    - assets/TombolDaftar.png
+    - assets/PasienBpjs.png
+    - assets/PasienMitra.png
+    - assets/PasienTunai.png
+    - assets/ImmaApps.png
+    - assets/immaText.png
+    - assets/gedung.png
+    - assets/2024.png
+    - assets/inputlogin.png
+    - assets/Peserta.png
+    - assets/waLogo.png
+    - assets/bed.png
+    - assets/immaText.png
+    - assets/mobile.png
 
 
     # - images/a_dot_ham.jpeg

@@ -4,11 +4,12 @@ import '../../domain/entities/paramedic.dart';
 import '../../domain/repositories/paramedic_repository.dart';
 
 class ParamedicRepositoryImpl implements ParamedicRepository {
-  final String baseUrl = "http://10.200.200.20:8080/getAllParamedicIDnNamenTypeNonBPJSnMixed";
+  final String baseUrl = "https://app.rsimmanuel.net/getAllParamedicIDnNameNonBPJSnMixed";
 
   @override
   Future<List<Paramedic>> getAllParamedics() async {
     final response = await http.get(Uri.parse('${baseUrl}'));
+    print(response.body);
     if (response.statusCode == 200) {
       final List<dynamic> paramedicList = json.decode(response.body);
       print(paramedicList[0]);
@@ -20,7 +21,7 @@ class ParamedicRepositoryImpl implements ParamedicRepository {
   Future<List<Paramedic>> getDoctorsByPoli(String poliId) async {
     // Panggil API atau data lokal untuk mengambil daftar dokter berdasarkan poliId
     // Contoh implementasi API call
-    final response = await http.get(Uri.parse('http://10.200.200.20:8080/getParamedicByServiceUnit?serviceunitid=$poliId'));
+    final response = await http.get(Uri.parse('https://app.rsimmanuel.net/getParamedicByServiceUnit?serviceunitid=$poliId'));
     print(response.body);
     if (response.statusCode == 200) {
       List<dynamic> data = jsonDecode(response.body);

@@ -15,6 +15,7 @@ import 'features/auth/domain/usecases/signup_usecase.dart';
 import 'features/auth/presentation/pages/pasien_mitra_page.dart';
 import 'features/auth/presentation/pages/pasien_tunai_page.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'features/auth/presentation/pages/first_page.dart';
 
 void main() async {
   // Inisialisasi Hive untuk penyimpanan data lokal
@@ -50,6 +51,7 @@ class MyApp extends StatelessWidget {
         title: 'Flutter Clean Architecture',
         initialRoute: '/',
         routes: {
+          '/first': (context) => FirstPage(), // Halaman pembuka (splash screen)
           '/': (context) => LoginPage(),
           '/signup': (context) => SignupPage(),
           '/home': (context) => HomePage(getPatientUsecase: GetPatientUsecase(patientRepository)),
@@ -62,4 +64,5 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
 
